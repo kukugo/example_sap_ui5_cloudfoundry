@@ -1,0 +1,63 @@
+ID: DemoProject
+_schema-version: '2.1'
+parameters:
+  deploy_mode: html5-repo
+version: 0.0.1
+modules:
+  - name: DemoProject_appRouter
+    type: approuter.nodejs
+    path: DemoProject_appRouter
+    properties:
+      TENANT_HOST_PATTERN: ^(.*)-c4re.cfapps.sap.hana.ondemand.com
+    parameters:
+      disk-quota: 256M
+      memory: 256M
+    requires:
+      - name: rt_DemoProject_appRouter
+      - name: portal_resources_DemoProject
+      - name: c4re-uaa
+  - name: DemoProject_ui_deployer
+    type: com.sap.html5.application-content
+    path: DemoProject_ui_deployer
+    requires:
+      - name: dt_DemoProject_ui_deployer
+    build-parameters:
+      requires:
+        - name: demoProject
+          artifacts:
+            - './*'
+          target-path: resources/demoProject
+  - name: demoProject
+    type: html5
+    path: demoProject
+    build-parameters:
+      builder: grunt
+  - name: FLP
+    type: com.sap.portal.site-content
+    path: FLP
+    parameters:
+      memory: 128M
+      buildpack: 'https://github.com/cloudfoundry/nodejs-buildpack/releases/download/v1.6.21/nodejs-buildpack-v1.6.21.zip'
+    requires:
+      - name: portal_resources_DemoProject
+      - name: c4re-uaa
+      - name: dt_DemoProject_ui_deployer
+      - name: DemoProject_ui_deployer
+resources:
+  - name: rt_DemoProject_appRouter
+    parameters:
+      service-plan: app-runtime
+      service: html5-apps-repo
+    type: org.cloudfoundry.managed-service
+  - name: dt_DemoProject_ui_deployer
+    parameters:
+      service-plan: app-host
+      service: html5-apps-repo
+    type: org.cloudfoundry.managed-service
+  - name: portal_resources_DemoProject
+    parameters:
+      service-plan: standard
+      service: portal
+    type: org.cloudfoundry.managed-service
+  - name: c4re-uaa
+    type: org.cloudfoundry.existing-service
